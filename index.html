@@ -1,0 +1,602 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>こはくちゃんが、琥珀糖を！</title>
+<style>
+  :root{
+    --amber-1:#f2a65a;
+    --amber-2:#e8804f;
+    --cream:#fff6e9;
+    --sky-1:#bfe3ff;
+    --sky-2:#eaf6ff;
+    --ground:#f4d9a8;
+    --ink:#5a3d2b;
+    --pink:#ff8fab;
+    --mint:#7fd9c4;
+    --lemon:#ffd76a;
+    --lilac:#c6a8f2;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;height:100%;
+    font-family:"Hiragino Maru Gothic ProN","Yu Gothic",sans-serif;
+    background:linear-gradient(180deg,var(--sky-1),var(--sky-2));
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+    -webkit-tap-highlight-color:transparent;
+    user-select:none;
+  }
+  #app{
+    width:420px;max-width:100vw;
+    height:720px;max-height:100vh;
+    position:relative;
+    background:linear-gradient(180deg,var(--sky-1) 0%,var(--sky-2) 55%,var(--ground) 55%,var(--ground) 100%);
+    overflow:hidden;
+    border-radius:0;
+    box-shadow:0 0 40px rgba(90,61,43,.15);
+  }
+
+  /* ---------- Title Screen ---------- */
+  #titleScreen{
+    position:absolute;inset:0;
+    display:flex;flex-direction:column;align-items:center;
+    padding:28px 24px 20px;
+    text-align:center;
+    z-index:10;
+    background:linear-gradient(180deg,var(--sky-1) 0%,var(--sky-2) 60%,var(--ground) 60%,var(--ground) 100%);
+  }
+  .eyebrow{
+    font-size:12px;letter-spacing:.3em;color:var(--amber-2);
+    font-weight:700;margin-top:4px;
+  }
+  h1{
+    font-size:26px;color:var(--ink);margin:6px 0 4px;
+    line-height:1.3;
+  }
+  .lead{
+    font-size:13px;color:#8a6a52;margin:0 0 14px;line-height:1.6;
+  }
+  .title-img{
+    width:150px;height:150px;object-fit:contain;
+    filter:drop-shadow(0 8px 10px rgba(90,61,43,.25));
+    animation:bob 2.2s ease-in-out infinite;
+  }
+  @keyframes bob{
+    0%,100%{transform:translateY(0) rotate(-2deg);}
+    50%{transform:translateY(-10px) rotate(2deg);}
+  }
+  .nick-row{
+    margin-top:14px;width:100%;max-width:260px;
+  }
+  .nick-row label{
+    display:block;font-size:11px;color:var(--ink);margin-bottom:6px;
+    letter-spacing:.05em;
+  }
+  #nickInput{
+    width:100%;padding:10px 14px;border-radius:999px;
+    border:2px solid var(--amber-1);font-size:14px;
+    text-align:center;outline:none;background:#fff;
+    color:var(--ink);
+  }
+  #nickInput:focus{border-color:var(--amber-2);}
+  #playBtn{
+    margin-top:18px;padding:14px 46px;border:none;border-radius:999px;
+    background:linear-gradient(180deg,var(--amber-1),var(--amber-2));
+    color:#fff;font-size:17px;font-weight:700;letter-spacing:.1em;
+    box-shadow:0 6px 0 #b85f36, 0 10px 16px rgba(184,95,54,.3);
+    cursor:pointer;transition:transform .08s;
+  }
+  #playBtn:active{transform:translateY(4px);box-shadow:0 2px 0 #b85f36;}
+  .hint{
+    margin-top:10px;font-size:11px;color:#a4876f;
+  }
+  .rank-box{
+    margin-top:18px;width:100%;max-width:270px;
+    background:rgba(255,255,255,.65);border-radius:16px;
+    padding:12px 16px;border:1px solid rgba(232,128,79,.3);
+  }
+  .rank-title{
+    font-size:12px;font-weight:700;color:var(--amber-2);
+    margin-bottom:6px;letter-spacing:.05em;
+  }
+  #rankList{list-style:none;margin:0;padding:0;font-size:12.5px;color:var(--ink);}
+  #rankList li{
+    display:flex;justify-content:space-between;
+    padding:3px 2px;border-bottom:1px dashed rgba(90,61,43,.15);
+  }
+  #rankList li:last-child{border-bottom:none;}
+  #rankList .rk{color:var(--amber-2);font-weight:700;width:20px;}
+  #rankList .nm{flex:1;text-align:left;padding-left:6px;}
+  #rankList .sc{font-weight:700;}
+
+  /* ---------- HUD ---------- */
+  #hud{
+    position:absolute;top:0;left:0;right:0;
+    display:flex;justify-content:space-between;align-items:flex-start;
+    padding:14px 16px;z-index:5;pointer-events:none;
+    font-size:13px;color:var(--ink);font-weight:700;
+  }
+  .hud-box{
+    background:rgba(255,255,255,.7);border-radius:12px;
+    padding:6px 12px;line-height:1.3;
+  }
+  .hud-label{font-size:9px;letter-spacing:.1em;color:#a4876f;font-weight:700;}
+  .hud-val{font-size:16px;color:var(--amber-2);}
+  #lives{font-size:16px;letter-spacing:2px;}
+
+  /* ---------- Game world ---------- */
+  #world{position:absolute;inset:0;}
+  .cloud{
+    position:absolute;background:#fff;border-radius:50px;opacity:.8;
+  }
+  #ground{
+    position:absolute;left:0;right:0;bottom:0;height:44%;
+    background:var(--ground);
+  }
+  #groundLine{
+    position:absolute;left:0;right:0;
+    height:4px;background:#e0b877;
+  }
+  #player{
+    position:absolute;width:70px;height:70px;
+    left:60px;
+    transform-origin:center bottom;
+    z-index:4;
+  }
+  #player img{width:100%;height:100%;object-fit:contain;
+    filter:drop-shadow(0 6px 6px rgba(90,61,43,.3));}
+
+  .obstacle{
+    position:absolute;z-index:3;
+    display:flex;align-items:center;justify-content:center;
+    font-size:30px;
+  }
+  .candy{
+    position:absolute;z-index:3;
+    width:26px;height:26px;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:20px;
+  }
+  .pop{
+    position:absolute;z-index:6;font-weight:700;font-size:14px;
+    color:var(--amber-2);pointer-events:none;
+    animation:popup .6s ease-out forwards;
+  }
+  @keyframes popup{
+    0%{opacity:1;transform:translateY(0);}
+    100%{opacity:0;transform:translateY(-30px);}
+  }
+  .flash{
+    animation:flash .4s ease;
+  }
+  @keyframes flash{
+    0%,100%{filter:none;}
+    50%{filter:brightness(2) saturate(0);}
+  }
+
+  #startHint{
+    position:absolute;bottom:18%;left:0;right:0;text-align:center;
+    color:var(--ink);font-size:13px;font-weight:700;
+    opacity:0;animation:fadein .4s .3s forwards;
+    text-shadow:0 1px 0 #fff;
+  }
+  @keyframes fadein{to{opacity:.85;}}
+
+  /* ---------- Game Over ---------- */
+  #overScreen{
+    position:absolute;inset:0;
+    display:none;flex-direction:column;align-items:center;justify-content:center;
+    background:rgba(90,61,43,.55);z-index:20;color:#fff;text-align:center;
+    backdrop-filter:blur(2px);
+  }
+  #overScreen h2{font-size:22px;margin:0 0 6px;}
+  #overScreen .final{font-size:36px;font-weight:800;margin:8px 0;color:var(--lemon);}
+  #overScreen .newbest{font-size:13px;color:var(--mint);margin-bottom:10px;height:16px;}
+  #retryBtn{
+    margin-top:14px;padding:12px 38px;border:none;border-radius:999px;
+    background:linear-gradient(180deg,var(--amber-1),var(--amber-2));
+    color:#fff;font-size:15px;font-weight:700;cursor:pointer;
+    box-shadow:0 5px 0 #b85f36;
+  }
+  #retryBtn:active{transform:translateY(3px);box-shadow:0 2px 0 #b85f36;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="hud" style="display:none;">
+    <div class="hud-box">
+      <div class="hud-label">SCORE</div>
+      <div class="hud-val" id="scoreVal">0000</div>
+    </div>
+    <div class="hud-box" style="text-align:center;">
+      <div id="lives">♡♡♡</div>
+    </div>
+    <div class="hud-box" style="text-align:right;">
+      <div class="hud-label">BEST</div>
+      <div class="hud-val" id="bestVal">0000</div>
+    </div>
+  </div>
+
+  <div id="world">
+    <div id="ground"></div>
+    <div id="groundLine"></div>
+    <div id="player"><img src="https://kohaku-jump.hodaka29.chatgpt.site/kohaku-penguin.png" alt="こはくちゃん" id="playerImg"></div>
+  </div>
+
+  <div id="startHint" style="display:none;">タップ または SPACE でジャンプ</div>
+
+  <div id="titleScreen">
+    <div class="eyebrow">KOHAKU JUMP QUEST</div>
+    <h1>こはくちゃんが、<br>琥珀糖を！</h1>
+    <p class="lead">氷や雪玉をぴょーんとよけて、<br>いろんな色の琥珀糖をぱくっ！</p>
+    <img class="title-img" src="https://kohaku-jump.hodaka29.chatgpt.site/kohaku-penguin.png" alt="こはくちゃん">
+
+    <div class="nick-row">
+      <label for="nickInput">ニックネーム</label>
+      <input id="nickInput" maxlength="8" placeholder="こはく" />
+    </div>
+    <button id="playBtn">▶ あそぶ</button>
+    <div class="hint">タップ または SPACE でジャンプ／走るほど加速するよ</div>
+
+    <div class="rank-box">
+      <div class="rank-title">🏆 ランキング TOP 5</div>
+      <ul id="rankList"><li>読み込み中…</li></ul>
+    </div>
+  </div>
+
+  <div id="overScreen">
+    <div class="eyebrow" style="color:var(--lemon);">GAME OVER</div>
+    <h2>おつかれさま！</h2>
+    <div class="final" id="finalScore">0000</div>
+    <div class="newbest" id="newBestMsg"></div>
+    <button id="retryBtn">もう一度あそぶ</button>
+  </div>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getFirestore, collection, addDoc, query, orderBy, limit, getDocs, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCKn3tODFGueP3NcPzEsCAalU-JFTtf0Vw",
+    authDomain: "kohaku-jump.firebaseapp.com",
+    projectId: "kohaku-jump",
+    storageBucket: "kohaku-jump.firebasestorage.app",
+    messagingSenderId: "777260261331",
+    appId: "1:777260261331:web:fa67b2eefe049081aa1926"
+  };
+  const fbApp = initializeApp(firebaseConfig);
+  const db = getFirestore(fbApp);
+  const RANK_COL = collection(db, "rankings");
+
+(function(){
+  const app = document.getElementById('app');
+  const player = document.getElementById('player');
+  const world = document.getElementById('world');
+  const ground = document.getElementById('ground');
+  const titleScreen = document.getElementById('titleScreen');
+  const overScreen = document.getElementById('overScreen');
+  const hud = document.getElementById('hud');
+  const startHint = document.getElementById('startHint');
+  const scoreVal = document.getElementById('scoreVal');
+  const bestVal = document.getElementById('bestVal');
+  const livesEl = document.getElementById('lives');
+  const finalScore = document.getElementById('finalScore');
+  const newBestMsg = document.getElementById('newBestMsg');
+  const nickInput = document.getElementById('nickInput');
+  const playBtn = document.getElementById('playBtn');
+  const retryBtn = document.getElementById('retryBtn');
+  const rankList = document.getElementById('rankList');
+
+  const CANDY_COLORS = [
+    {bg:'#ff8fab', label:'🍬'},
+    {bg:'#ffd76a', label:'🍯'},
+    {bg:'#7fd9c4', label:'🍡'},
+    {bg:'#c6a8f2', label:'💎'},
+    {bg:'#f2a65a', label:'🟠'}
+  ];
+  const OBSTACLES = ['❄️','⚪','🧊'];
+
+  let groundH, groundTop;
+  function measure(){
+    const r = ground.getBoundingClientRect();
+    const ar = app.getBoundingClientRect();
+    groundTop = r.top - ar.top; // y position where ground begins
+  }
+  window.addEventListener('resize', measure);
+
+  // clouds
+  for(let i=0;i<4;i++){
+    const c = document.createElement('div');
+    c.className='cloud';
+    const w = 40+Math.random()*50, h = w*0.5;
+    c.style.width=w+'px';c.style.height=h+'px';
+    c.style.top=(10+Math.random()*30)+'%';
+    c.style.left=(Math.random()*100)+'%';
+    world.appendChild(c);
+  }
+
+  let running=false;
+  let px=60, py=0, vy=0;
+  const GRAV=2200, JUMP_V=-780;
+  let groundY=0;
+  let entities=[]; // {el,type,x,y,w,h,speedFactor}
+  let lastTime=0;
+  let elapsed=0;
+  let speed=260; // px/sec base
+  let spawnTimer=0, spawnInterval=1.1;
+  let candyTimer=0, candyInterval=1.6;
+  let score=0, best=0, lives=3;
+  let nickname='こはく';
+  let onGround=true;
+
+  function playerHeight(){ return player.offsetHeight; }
+  function playerWidth(){ return player.offsetWidth; }
+
+  function resetPositions(){
+    measure();
+    groundY = groundTop - playerHeight() + 8;
+    py = groundY;
+    vy = 0;
+    onGround = true;
+    player.style.left = px+'px';
+    player.style.top = py+'px';
+    player.style.transform = 'rotate(0deg)';
+  }
+
+  function clearEntities(){
+    entities.forEach(e=>e.el.remove());
+    entities=[];
+  }
+
+  function spawnObstacle(){
+    const el = document.createElement('div');
+    el.className='obstacle';
+    el.textContent = OBSTACLES[Math.floor(Math.random()*OBSTACLES.length)];
+    const size = 30+Math.random()*10;
+    el.style.fontSize=size+'px';
+    const w=size, h=size;
+    const x = app.clientWidth+20;
+    const y = groundTop - h + 6;
+    el.style.left=x+'px';
+    el.style.top=y+'px';
+    world.appendChild(el);
+    entities.push({el,type:'obstacle',x,y,w,h});
+  }
+
+  function spawnCandy(){
+    const el = document.createElement('div');
+    el.className='candy';
+    const c = CANDY_COLORS[Math.floor(Math.random()*CANDY_COLORS.length)];
+    el.style.background = c.bg;
+    el.textContent = c.label;
+    const x = app.clientWidth+20;
+    // candy can float higher, sometimes requiring a jump
+    const highChance = Math.random();
+    let y;
+    if(highChance<0.5){
+      y = groundTop-30;
+    } else {
+      y = groundTop - 60 - Math.random()*70;
+    }
+    el.style.left=x+'px';
+    el.style.top=y+'px';
+    world.appendChild(el);
+    entities.push({el,type:'candy',x,y,w:26,h:26});
+  }
+
+  function popText(x,y,text,color){
+    const p=document.createElement('div');
+    p.className='pop';
+    p.textContent=text;
+    p.style.left=x+'px';
+    p.style.top=y+'px';
+    p.style.color=color||'var(--amber-2)';
+    world.appendChild(p);
+    setTimeout(()=>p.remove(),650);
+  }
+
+  function updateHud(){
+    scoreVal.textContent = String(Math.floor(score)).padStart(4,'0');
+    bestVal.textContent = String(Math.floor(best)).padStart(4,'0');
+    livesEl.textContent = '♥'.repeat(lives)+'♡'.repeat(Math.max(0,3-lives));
+  }
+
+  function jump(){
+    if(!running) return;
+    if(onGround){
+      vy = JUMP_V;
+      onGround=false;
+    }
+  }
+
+  function hit(){
+    lives--;
+    player.classList.remove('flash');
+    void player.offsetWidth;
+    player.classList.add('flash');
+    updateHud();
+    if(lives<=0){
+      endGame();
+    }
+  }
+
+  function eatCandy(x,y){
+    score += 10;
+    popText(x,y,'+10','#ffd76a');
+    updateHud();
+  }
+
+  function loop(t){
+    if(!running) return;
+    if(!lastTime) lastTime=t;
+    let dt = (t-lastTime)/1000;
+    if(dt>0.05) dt=0.05;
+    lastTime=t;
+    elapsed += dt;
+
+    // difficulty ramp
+    speed = 260 + Math.min(340, elapsed*9);
+    spawnInterval = Math.max(0.55, 1.15 - elapsed*0.01);
+
+    // physics
+    vy += GRAV*dt;
+    py += vy*dt;
+    if(py>=groundY){
+      py=groundY; vy=0; onGround=true;
+      player.style.transform='rotate(0deg)';
+    } else {
+      const tilt = Math.max(-18, Math.min(18, vy/60));
+      player.style.transform='rotate('+tilt+'deg)';
+    }
+    player.style.top = py+'px';
+
+    // score by distance
+    score += dt*12;
+
+    // spawn
+    spawnTimer += dt;
+    if(spawnTimer>=spawnInterval){
+      spawnTimer=0;
+      spawnObstacle();
+    }
+    candyTimer += dt;
+    if(candyTimer>=candyInterval){
+      candyTimer=0;
+      spawnCandy();
+    }
+
+    // move entities
+    const pRect = {x:px+8, y:py+8, w:playerWidth()-16, h:playerHeight()-16};
+    for(let i=entities.length-1;i>=0;i--){
+      const e = entities[i];
+      e.x -= speed*dt;
+      e.el.style.left = e.x+'px';
+      if(e.x < -60){
+        e.el.remove();
+        entities.splice(i,1);
+        continue;
+      }
+      // collision (AABB)
+      if(e.x < pRect.x+pRect.w && e.x+e.w > pRect.x &&
+         e.y < pRect.y+pRect.h && e.y+e.h > pRect.y){
+        if(e.type==='obstacle'){
+          e.el.remove();
+          entities.splice(i,1);
+          hit();
+        } else if(e.type==='candy'){
+          eatCandy(e.x, e.y);
+          e.el.remove();
+          entities.splice(i,1);
+        }
+      }
+    }
+
+    updateHud();
+    if(running) requestAnimationFrame(loop);
+  }
+
+  async function loadBest(){
+    try{
+      const v = localStorage.getItem('kohaku_best_score');
+      best = v ? (parseFloat(v) || 0) : 0;
+    }catch(e){ best = 0; }
+  }
+  async function saveBest(){
+    try{ localStorage.setItem('kohaku_best_score', String(best)); }catch(e){}
+  }
+
+  async function loadRanking(){
+    rankList.innerHTML = '<li>読み込み中…</li>';
+    try{
+      const q = query(RANK_COL, orderBy('score','desc'), limit(5));
+      const snap = await getDocs(q);
+      const top = [];
+      snap.forEach(doc=> top.push(doc.data()));
+      if(top.length===0){
+        rankList.innerHTML = '<li>まだ記録がないよ</li>';
+      } else {
+        rankList.innerHTML = top.map((e,i)=>
+          `<li><span class="rk">${i+1}</span><span class="nm">${escapeHtml(e.name)}</span><span class="sc">${Math.floor(e.score)}</span></li>`
+        ).join('');
+      }
+    }catch(e){
+      console.error(e);
+      rankList.innerHTML = '<li>ランキング取得に失敗しました</li>';
+    }
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  async function saveRankingIfQualifies(finalSc){
+    try{
+      await addDoc(RANK_COL, {
+        name: nickname,
+        score: Math.floor(finalSc),
+        createdAt: serverTimestamp()
+      });
+    }catch(e){ console.error(e); }
+  }
+
+  async function startGame(){
+    nickname = (nickInput.value||'こはく').trim().slice(0,8) || 'こはく';
+    titleScreen.style.display='none';
+    overScreen.style.display='none';
+    hud.style.display='flex';
+    startHint.style.display='block';
+    clearEntities();
+    score=0; lives=3; elapsed=0; spawnTimer=0; candyTimer=0; lastTime=0;
+    await loadBest();
+    updateHud();
+    resetPositions();
+    running=true;
+    requestAnimationFrame(loop);
+    setTimeout(()=>{ startHint.style.opacity=0; },2500);
+  }
+
+  async function endGame(){
+    running=false;
+    startHint.style.display='none';
+    let isNew=false;
+    if(score>best){ best=score; isNew=true; await saveBest(); }
+    await saveRankingIfQualifies(score);
+    finalScore.textContent = String(Math.floor(score)).padStart(4,'0');
+    newBestMsg.textContent = isNew ? '✨ 新記録！ ✨' : '';
+    overScreen.style.display='flex';
+    updateHud();
+    loadRanking();
+  }
+
+  playBtn.addEventListener('click', startGame);
+  retryBtn.addEventListener('click', startGame);
+
+  window.addEventListener('keydown', (e)=>{
+    if(['Space','ArrowUp','KeyW'].includes(e.code)){
+      e.preventDefault();
+      jump();
+    }
+  });
+  app.addEventListener('pointerdown', (e)=>{
+    if(running) jump();
+  });
+
+  window.addEventListener('DOMContentLoaded', ()=>{
+    measure();
+    resetPositions();
+  });
+  measure();
+  resetPositions();
+  loadBest().then(updateHud);
+  loadRanking();
+})();
+</script>
+</body>
+</html>
